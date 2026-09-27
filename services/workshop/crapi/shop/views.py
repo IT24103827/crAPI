@@ -246,13 +246,11 @@ class OrderControlView(APIView):
                 {"message": messages.INVALID_STATUS}, status=status.HTTP_400_BAD_REQUEST
             )
         user_details = UserDetails.objects.get(user=order.user)
-        if "status" in request_data and request_data["status"] != order.status:
-            order.status = request_data["status"]
-            if request_data["status"] == Order.STATUS_CHOICES.RETURNED.value:
-                user_details.available_credit += float(
-                    order.quantity * order.product.price
-                )
-                user_details.save()
+        if "status" in request_data:
+            return Response(
+                {"message": "Direct status modification is not allowed."},
+        status=status.HTTP_403_FORBIDDEN,
+        )
         order.save()
         serializer = OrderSerializer(order)
         response_data = dict(orders=serializer.data)
