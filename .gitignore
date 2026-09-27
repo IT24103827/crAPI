@@ -6,3 +6,6 @@ deploy/vagrant/.vagrant
 services/chatbot/db
 services/certs/
 docker-compose.local.yml
+*.bak
+evidence/member-2/05-vulnerability/testing/*_test.sh
+evidence/member-2/05-vulnerability/testing/order_put_request*.sh
