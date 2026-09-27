@@ -108,7 +108,7 @@ services:
 
   crapi-workshop:
     container_name: crapi-workshop
-    image: crapi-workship-fixed:${VERSION:-latest}
+    image: crapi/crapi-workshop:${VERSION:-latest}
     #ports:
     #  - "${LISTEN_IP:-127.0.0.1}:8000:8000"
     environment:
