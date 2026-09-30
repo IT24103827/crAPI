@@ -32,7 +32,7 @@ from utils.logging import log_error
 from crapi_site import settings
 from crapi.mechanic.models import ServiceRequest, ServiceComment
 from .serializers import ContactMechanicSerializer, UserServiceRequestSerializer
-
+from urllib.parse import urlparse
 
 logger = logging.getLogger()
 
@@ -82,13 +82,25 @@ class ContactMechanicView(APIView):
         repeat_count = 0
         while True:
             request_url = request_data["mechanic_api"]
-            logger.info(f"Repeat count: {repeat_count}, mechanic_api: {request_url}")
+            parsed_url = urlparse(request_url)
+            allowed_hosts = [
+                "98.70.73.39"
+            ]
+            if parsed_url.hostname not in allowed_hosts:
+                return Response(
+                    {"message": "Destination not allowed"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            logger.info(
+                f"Repeat count: {repeat_count}, mechanic_api: {request_url}"
+            )
             try:
                 mechanic_response = requests.get(
                     request_url,
                     params=request_data,
-                    headers={"Authorization": request.META.get("HTTP_AUTHORIZATION")},
-                    verify=False,
+                    headers={},
+                    verify=True,
+		    timeout=5,
                 )
                 if mechanic_response.status_code == status.HTTP_200_OK:
                     logger.info(f"Got a valid response at repeat count: {repeat_count}")
