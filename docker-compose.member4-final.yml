@@ -1,0 +1,4 @@
+services:
+  crapi-workshop:
+    image: crapi-workshop-member4-final:v2
+    pull_policy: never
