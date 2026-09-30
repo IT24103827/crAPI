@@ -83,14 +83,53 @@ class ContactMechanicView(APIView):
         while True:
             request_url = request_data["mechanic_api"]
             parsed_url = urlparse(request_url)
-            allowed_hosts = [
-                "98.70.73.39"
-            ]
-            if parsed_url.hostname not in allowed_hosts:
+
+            allowed_path = "/workshop/api/mechanic/receive_report"
+
+            allowed_destinations = {
+                ("https", "crapi-workshop", 8000),
+                ("http", "98.70.73.39", 8888),
+                ("http", "api.mypremiumdealership.com", 80),
+                ("https", "api.mypremiumdealership.com", 443),
+            }
+
+            effective_port = parsed_url.port
+
+            if effective_port is None:
+                if parsed_url.scheme == "http":
+                    effective_port = 80
+                elif parsed_url.scheme == "https":
+                    effective_port = 443
+
+            destination = (
+                parsed_url.scheme,
+                parsed_url.hostname,
+                effective_port,
+            )
+
+            logger.warning(
+                "SSRF validation scheme=%s hostname=%s port=%s path=%s",
+                parsed_url.scheme,
+                parsed_url.hostname,
+                effective_port,
+                parsed_url.path,
+            )
+
+            destination_allowed = (
+                destination in allowed_destinations
+                and parsed_url.path == allowed_path
+                and parsed_url.username is None
+                and parsed_url.password is None
+                and parsed_url.query == ""
+                and parsed_url.fragment == ""
+            )
+
+            if not destination_allowed:
                 return Response(
                     {"message": "Destination not allowed"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
             logger.info(
                 f"Repeat count: {repeat_count}, mechanic_api: {request_url}"
             )
@@ -98,9 +137,10 @@ class ContactMechanicView(APIView):
                 mechanic_response = requests.get(
                     request_url,
                     params=request_data,
-                    headers={},
-                    verify=True,
-		    timeout=5,
+                    headers={"Authorization": request.META.get("HTTP_AUTHORIZATION")},
+                    verify=False,
+                    timeout=5,
+                    allow_redirects=False,
                 )
                 if mechanic_response.status_code == status.HTTP_200_OK:
                     logger.info(f"Got a valid response at repeat count: {repeat_count}")
